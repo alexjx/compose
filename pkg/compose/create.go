@@ -713,7 +713,7 @@ MOUNTS:
 		if m.Type == mount.TypeBind || m.Type == mount.TypeNamedPipe {
 			for _, v := range service.Volumes {
 				if v.Target == m.Target && v.Bind != nil && v.Bind.CreateHostPath {
-					binds = append(binds, fmt.Sprintf("%s:%s:%s", m.Source, m.Target, getBindMode(v.Bind, m.ReadOnly)))
+					binds = append(binds, fmt.Sprintf("%s:%s:%s", m.Source, m.Target, getBindMode(v.Bind, m.ReadOnly, v.Bind.Propagation)))
 					continue MOUNTS
 				}
 			}
@@ -723,7 +723,7 @@ MOUNTS:
 	return volumeMounts, binds, mounts, nil
 }
 
-func getBindMode(bind *types.ServiceVolumeBind, readOnly bool) string {
+func getBindMode(bind *types.ServiceVolumeBind, readOnly bool, propagation string) string {
 	mode := "rw"
 
 	if readOnly {
@@ -735,6 +735,10 @@ func getBindMode(bind *types.ServiceVolumeBind, readOnly bool) string {
 		mode += ",z"
 	case types.SELinuxPrivate:
 		mode += ",Z"
+	}
+
+	if propagation != "" {
+		mode += "," + propagation
 	}
 
 	return mode
